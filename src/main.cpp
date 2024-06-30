@@ -9,6 +9,7 @@
 #include <iostream>
 #include <filesystem>
 #include "menu/menu.h"
+#include "menu/esp.h"
 #include "rendering/background.h"
 
 struct FrameContext {
@@ -43,6 +44,8 @@ UINT g_numFramesInFlight = 3;
 ID3D12Resource* g_texture = nullptr;
 D3D12_CPU_DESCRIPTOR_HANDLE g_textureSrvCpuHandle = {};
 D3D12_GPU_DESCRIPTOR_HANDLE g_textureSrvGpuHandle = {};
+
+ESP esp;
 
 bool LoadTextureFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_CPU_DESCRIPTOR_HANDLE srv_cpu_handle, ID3D12Resource** out_tex_resource, int* out_width, int* out_height);
 
@@ -158,7 +161,7 @@ int main(int, char**) {
         if (ImGui::Button("-", button_size)) {
             ShowWindow(hwnd, SW_MINIMIZE);
         }
-        
+
         // Draw close button
         ImGui::SameLine();
         if (ImGui::Button("X", button_size)) {
@@ -196,7 +199,8 @@ int main(int, char**) {
         ImGui::GetBackgroundDrawList()->AddImage((ImTextureID)my_texture_srv_gpu_handle.ptr,
             ImVec2(drawX, drawY), ImVec2(drawX + drawWidth, drawY + drawHeight));
 
-        // RenderMenu();
+        //RenderMenu();
+        esp.Render();
 
         ImGui::Render();
 
@@ -479,4 +483,3 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     }
     return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 }
-
