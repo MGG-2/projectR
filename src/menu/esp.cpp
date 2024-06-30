@@ -20,10 +20,10 @@ void ESP::Render()
     // Draw Nickname
     ImVec2 p = ImGui::GetCursorScreenPos();
     float centerX = p.x + 125;  // Center of the window
-    ImGui::SetCursorScreenPos(ImVec2(centerX - ImGui::CalcTextSize("NICKNAME").x / 2, p.y));
+    ImGui::SetCursorScreenPos(ImVec2(centerX - ImGui::CalcTextSize("NICKNAME").x / 2, p.y + 5));
     ImGui::Text("NICKNAME");
 
-    // Draw custom Health Progress Bar (set at 100% for now)
+    // Draw Health Progress Bar (set at 100% for now)
     float health_percent = 1.0f;  // Health at 100%
     float progressBarWidth = 100.0f;
     float progressBarHeight = 5.0f;
@@ -38,21 +38,21 @@ void ESP::Render()
     float box_right_x = centerX + 50;
 
     // Draw corner lines
-    ImGui::GetWindowDrawList()->AddLine(ImVec2(box_left_x, box_top_y), ImVec2(box_left_x + 20, box_top_y), IM_COL32(255, 255, 255, 255), 2.0f); // Top left corner
-    ImGui::GetWindowDrawList()->AddLine(ImVec2(box_right_x - 20, box_top_y), ImVec2(box_right_x, box_top_y), IM_COL32(255, 255, 255, 255), 2.0f); // Top right corner
-    ImGui::GetWindowDrawList()->AddLine(ImVec2(box_left_x, box_bottom_y), ImVec2(box_left_x + 20, box_bottom_y), IM_COL32(255, 255, 255, 255), 2.0f); // Bottom left corner
-    ImGui::GetWindowDrawList()->AddLine(ImVec2(box_right_x - 20, box_bottom_y), ImVec2(box_right_x, box_bottom_y), IM_COL32(255, 255, 255, 255), 2.0f); // Bottom right corner
+    ImGui::GetWindowDrawList()->AddLine(ImVec2(box_left_x, box_top_y), ImVec2(box_left_x + 15, box_top_y), IM_COL32(255, 255, 255, 255), 2.0f); // Top left corner
+    ImGui::GetWindowDrawList()->AddLine(ImVec2(box_right_x - 15, box_top_y), ImVec2(box_right_x, box_top_y), IM_COL32(255, 255, 255, 255), 2.0f); // Top right corner
+    ImGui::GetWindowDrawList()->AddLine(ImVec2(box_left_x, box_bottom_y), ImVec2(box_left_x + 15, box_bottom_y), IM_COL32(255, 255, 255, 255), 2.0f); // Bottom left corner
+    ImGui::GetWindowDrawList()->AddLine(ImVec2(box_right_x - 15, box_bottom_y), ImVec2(box_right_x, box_bottom_y), IM_COL32(255, 255, 255, 255), 2.0f); // Bottom right corner
 
-    ImGui::GetWindowDrawList()->AddLine(ImVec2(box_left_x, box_top_y), ImVec2(box_left_x, box_top_y + 20), IM_COL32(255, 255, 255, 255), 2.0f); // Top left vertical
-    ImGui::GetWindowDrawList()->AddLine(ImVec2(box_right_x, box_top_y), ImVec2(box_right_x, box_top_y + 20), IM_COL32(255, 255, 255, 255), 2.0f); // Top right vertical
-    ImGui::GetWindowDrawList()->AddLine(ImVec2(box_left_x, box_bottom_y - 20), ImVec2(box_left_x, box_bottom_y), IM_COL32(255, 255, 255, 255), 2.0f); // Bottom left vertical
-    ImGui::GetWindowDrawList()->AddLine(ImVec2(box_right_x, box_bottom_y - 20), ImVec2(box_right_x, box_bottom_y), IM_COL32(255, 255, 255, 255), 2.0f); // Bottom right vertical
+    ImGui::GetWindowDrawList()->AddLine(ImVec2(box_left_x, box_top_y), ImVec2(box_left_x, box_top_y + 15), IM_COL32(255, 255, 255, 255), 2.0f); // Top left vertical
+    ImGui::GetWindowDrawList()->AddLine(ImVec2(box_right_x, box_top_y), ImVec2(box_right_x, box_top_y + 15), IM_COL32(255, 255, 255, 255), 2.0f); // Top right vertical
+    ImGui::GetWindowDrawList()->AddLine(ImVec2(box_left_x, box_bottom_y - 15), ImVec2(box_left_x, box_bottom_y), IM_COL32(255, 255, 255, 255), 2.0f); // Bottom left vertical
+    ImGui::GetWindowDrawList()->AddLine(ImVec2(box_right_x, box_bottom_y - 15), ImVec2(box_right_x, box_bottom_y), IM_COL32(255, 255, 255, 255), 2.0f); // Bottom right vertical
 
     // Adjust cursor for left and right columns
     float spacing = 15.0f;
     float column_start_y = box_top_y + 10;
-    float left_column_x = box_left_x - 60; // Adjusted for alignment
-    float right_column_x = box_right_x + 40; // Adjusted for alignment
+    float left_column_x = box_left_x - 70; // Adjusted for alignment
+    float right_column_x = box_right_x + 20; // Adjusted for alignment
 
     // Draw Left Column
     ImGui::SetCursorScreenPos(ImVec2(left_column_x, column_start_y));
@@ -79,7 +79,7 @@ void ESP::Render()
     ImGui::GetWindowDrawList()->AddLine(ImVec2(centerX - 50, box_bottom_y + 10), ImVec2(centerX + 50, box_bottom_y + 10), IM_COL32(0, 0, 255, 255), 2.0f);
 
     // Draw Weapon
-    ImGui::SetCursorScreenPos(ImVec2(centerX - ImGui::CalcTextSize("WEAPON").x / 2, box_bottom_y + 30));
+    ImGui::SetCursorScreenPos(ImVec2(centerX - ImGui::CalcTextSize("WEAPON").x / 2, box_bottom_y + 20));
     ImGui::Text("WEAPON");
 
     ImGui::End();

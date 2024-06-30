@@ -475,6 +475,11 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return 0;
     case WM_NCHITTEST:
     {
+        // Let ImGui handle the hit test if it's interacting with a window
+        if (ImGui::GetIO().WantCaptureMouse)
+            break;
+
+        // If ImGui is not interacting with a window, allow dragging the main window
         LRESULT hit = DefWindowProc(hWnd, msg, wParam, lParam);
         if (hit == HTCLIENT)
             hit = HTCAPTION;
