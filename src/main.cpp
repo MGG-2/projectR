@@ -43,8 +43,7 @@ ID3D12Resource* g_texture = nullptr;
 D3D12_CPU_DESCRIPTOR_HANDLE g_textureSrvCpuHandle = {};
 D3D12_GPU_DESCRIPTOR_HANDLE g_textureSrvGpuHandle = {};
 
-bool LoadBackgroundImage(const std::string& filename, ID3D12Device* device, ID3D12GraphicsCommandList* commandList, ID3D12CommandQueue* commandQueue);
-void RenderBackground(ID3D12GraphicsCommandList* commandList);
+bool LoadTextureFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_CPU_DESCRIPTOR_HANDLE srv_cpu_handle, ID3D12Resource** out_tex_resource, int* out_width, int* out_height);
 
 // Forward Declarations
 bool CreateDeviceD3D(HWND hWnd);
@@ -81,17 +80,20 @@ int main(int, char**) {
     }
     std::cout << "Direct3D device created successfully." << std::endl;
 
-    // Construct the absolute path for the image
-    std::filesystem::path imagePath = std::filesystem::current_path() / "src" / "visuals" / "background.jpg";
-    std::cout << "Loading background image from " << imagePath << std::endl;
+    // Load the texture
+    int my_image_width = 0;
+    int my_image_height = 0;
+    ID3D12Resource* my_texture = NULL;
 
-    // Load the background image
-    if (!LoadBackgroundImage(imagePath.string(), g_pd3dDevice, g_pd3dCommandList, g_pd3dCommandQueue)) {
-        std::cerr << "Failed to load background image from " << imagePath << std::endl;
-        CleanupDeviceD3D();
-        UnregisterClass(wc.lpszClassName, wc.hInstance);
-        return 1;
-    }
+    UINT handle_increment = g_pd3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    int descriptor_index = 1; // The descriptor table index to use
+    D3D12_CPU_DESCRIPTOR_HANDLE my_texture_srv_cpu_handle = g_pd3dSrvDescHeap->GetCPUDescriptorHandleForHeapStart();
+    my_texture_srv_cpu_handle.ptr += (handle_increment * descriptor_index);
+    D3D12_GPU_DESCRIPTOR_HANDLE my_texture_srv_gpu_handle = g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart();
+    my_texture_srv_gpu_handle.ptr += (handle_increment * descriptor_index);
+
+    bool ret = LoadTextureFromFile("visuals/background.jpg", g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture, &my_image_width, &my_image_height);
+    IM_ASSERT(ret);
 
     // Show the window
     ShowWindow(hwnd, SW_SHOWDEFAULT);
@@ -145,11 +147,16 @@ int main(int, char**) {
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        // Render background
-        RenderBackground(g_pd3dCommandList);
-
         // Render Menu
         RenderMenu();
+
+        // Render Texture
+        ImGui::Begin("DirectX12 Texture Test");
+        ImGui::Text("CPU handle = %p", my_texture_srv_cpu_handle.ptr);
+        ImGui::Text("GPU handle = %p", my_texture_srv_gpu_handle.ptr);
+        ImGui::Text("size = %d x %d", my_image_width, my_image_height);
+        ImGui::Image((ImTextureID)my_texture_srv_gpu_handle.ptr, ImVec2((float)my_image_width, (float)my_image_height));
+        ImGui::End();
 
         // Rendering
         ImGui::Render();
@@ -258,7 +265,7 @@ bool CreateDeviceD3D(HWND hWnd) {
 
     D3D12_DESCRIPTOR_HEAP_DESC srvDesc = {};
     srvDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    srvDesc.NumDescriptors = 1;
+    srvDesc.NumDescriptors = 2; // Modify this value to 2
     srvDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     if (g_pd3dDevice->CreateDescriptorHeap(&srvDesc, IID_PPV_ARGS(&g_pd3dSrvDescHeap)) != S_OK) {
         std::cerr << "Failed to create SRV descriptor heap." << std::endl;

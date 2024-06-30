@@ -46,118 +46,148 @@ void UpdateSubresources(
     pCmdList->ResourceBarrier(1, &barrier);
 }
 
-bool LoadBackgroundImage(const std::string& filename, ID3D12Device* device, ID3D12GraphicsCommandList* commandList, ID3D12CommandQueue* commandQueue) {
-    std::string absoluteFilename = filename;
-    std::cout << "Loading background image from " << absoluteFilename << std::endl;
-
-    int width = 0, height = 0, channels = 0;
-    unsigned char* imageData = stbi_load(absoluteFilename.c_str(), &width, &height, &channels, STBI_rgb_alpha);
-    if (!imageData) {
-        std::cerr << "Failed to load image: " << absoluteFilename << std::endl;
-        std::cerr << "stb_image failure reason: " << stbi_failure_reason() << std::endl;
+bool LoadTextureFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_CPU_DESCRIPTOR_HANDLE srv_cpu_handle, ID3D12Resource** out_tex_resource, int* out_width, int* out_height)
+{
+    int image_width = 0;
+    int image_height = 0;
+    unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
+    if (image_data == NULL)
         return false;
-    }
 
-    D3D12_RESOURCE_DESC textureDesc = {};
-    textureDesc.MipLevels = 1;
-    textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    textureDesc.Width = width;
-    textureDesc.Height = height;
-    textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-    textureDesc.DepthOrArraySize = 1;
-    textureDesc.SampleDesc.Count = 1;
-    textureDesc.SampleDesc.Quality = 0;
-    textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    D3D12_HEAP_PROPERTIES props;
+    memset(&props, 0, sizeof(D3D12_HEAP_PROPERTIES));
+    props.Type = D3D12_HEAP_TYPE_DEFAULT;
+    props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
-    D3D12_HEAP_PROPERTIES heapProps = {};
-    heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
+    D3D12_RESOURCE_DESC desc;
+    ZeroMemory(&desc, sizeof(desc));
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    desc.Alignment = 0;
+    desc.Width = image_width;
+    desc.Height = image_height;
+    desc.DepthOrArraySize = 1;
+    desc.MipLevels = 1;
+    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+    desc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
-    if (device->CreateCommittedResource(
-        &heapProps,
-        D3D12_HEAP_FLAG_NONE,
-        &textureDesc,
-        D3D12_RESOURCE_STATE_COPY_DEST,
-        nullptr,
-        IID_PPV_ARGS(&g_backgroundTexture)) != S_OK) {
-        std::cerr << "Failed to create committed resource for texture." << std::endl;
-        stbi_image_free(imageData);
-        return false;
-    }
+    ID3D12Resource* pTexture = NULL;
+    d3d_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc,
+        D3D12_RESOURCE_STATE_COPY_DEST, NULL, IID_PPV_ARGS(&pTexture));
 
-    UINT64 uploadBufferSize = GetRequiredIntermediateSize(g_backgroundTexture, 0, 1);
+    UINT uploadPitch = (image_width * 4 + D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
+    UINT uploadSize = image_height * uploadPitch;
+    desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    desc.Alignment = 0;
+    desc.Width = uploadSize;
+    desc.Height = 1;
+    desc.DepthOrArraySize = 1;
+    desc.MipLevels = 1;
+    desc.Format = DXGI_FORMAT_UNKNOWN;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    desc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
-    D3D12_HEAP_PROPERTIES uploadHeapProps = {};
-    uploadHeapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+    props.Type = D3D12_HEAP_TYPE_UPLOAD;
+    props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
-    D3D12_RESOURCE_DESC bufferDesc = {};
-    bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    bufferDesc.Width = uploadBufferSize;
-    bufferDesc.Height = 1;
-    bufferDesc.DepthOrArraySize = 1;
-    bufferDesc.MipLevels = 1;
-    bufferDesc.Format = DXGI_FORMAT_UNKNOWN;
-    bufferDesc.SampleDesc.Count = 1;
-    bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    ID3D12Resource* uploadBuffer = NULL;
+    HRESULT hr = d3d_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc,
+        D3D12_RESOURCE_STATE_GENERIC_READ, NULL, IID_PPV_ARGS(&uploadBuffer));
+    IM_ASSERT(SUCCEEDED(hr));
 
-    ID3D12Resource* uploadBuffer = nullptr;
-    if (device->CreateCommittedResource(
-        &uploadHeapProps,
-        D3D12_HEAP_FLAG_NONE,
-        &bufferDesc,
-        D3D12_RESOURCE_STATE_GENERIC_READ,
-        nullptr,
-        IID_PPV_ARGS(&uploadBuffer)) != S_OK) {
-        std::cerr << "Failed to create upload buffer." << std::endl;
-        stbi_image_free(imageData);
-        return false;
-    }
+    void* mapped = NULL;
+    D3D12_RANGE range = { 0, uploadSize };
+    hr = uploadBuffer->Map(0, &range, &mapped);
+    IM_ASSERT(SUCCEEDED(hr));
+    for (int y = 0; y < image_height; y++)
+        memcpy((void*)((uintptr_t)mapped + y * uploadPitch), image_data + y * image_width * 4, image_width * 4);
+    uploadBuffer->Unmap(0, &range);
 
-    D3D12_SUBRESOURCE_DATA textureData = {};
-    textureData.pData = imageData;
-    textureData.RowPitch = width * 4;
-    textureData.SlicePitch = textureData.RowPitch * height;
+    D3D12_TEXTURE_COPY_LOCATION srcLocation = {};
+    srcLocation.pResource = uploadBuffer;
+    srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+    srcLocation.PlacedFootprint.Footprint.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srcLocation.PlacedFootprint.Footprint.Width = image_width;
+    srcLocation.PlacedFootprint.Footprint.Height = image_height;
+    srcLocation.PlacedFootprint.Footprint.Depth = 1;
+    srcLocation.PlacedFootprint.Footprint.RowPitch = uploadPitch;
 
-    UpdateSubresources(commandList, g_backgroundTexture, uploadBuffer, 0, 0, 1, &textureData);
+    D3D12_TEXTURE_COPY_LOCATION dstLocation = {};
+    dstLocation.pResource = pTexture;
+    dstLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+    dstLocation.SubresourceIndex = 0;
 
     D3D12_RESOURCE_BARRIER barrier = {};
     barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    barrier.Transition.pResource = g_backgroundTexture;
+    barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    barrier.Transition.pResource = pTexture;
+    barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
     barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
     barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-    barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-    commandList->ResourceBarrier(1, &barrier);
 
-    stbi_image_free(imageData);
+    ID3D12Fence* fence = NULL;
+    hr = d3d_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
+    IM_ASSERT(SUCCEEDED(hr));
 
-    D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-    srvHeapDesc.NumDescriptors = 1;
-    srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    if (device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&g_pd3dSrvDescHeap)) != S_OK) {
-        std::cerr << "Failed to create descriptor heap." << std::endl;
-        return false;
-    }
+    HANDLE event = CreateEvent(0, 0, 0, 0);
+    IM_ASSERT(event != NULL);
 
-    g_backgroundSrvCpuDescHandle = g_pd3dSrvDescHeap->GetCPUDescriptorHandleForHeapStart();
-    g_backgroundSrvGpuDescHandle = g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart();
+    D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+    queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+    queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+    queueDesc.NodeMask = 1;
 
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.Format = textureDesc.Format;
+    ID3D12CommandQueue* cmdQueue = NULL;
+    hr = d3d_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&cmdQueue));
+    IM_ASSERT(SUCCEEDED(hr));
+
+    ID3D12CommandAllocator* cmdAlloc = NULL;
+    hr = d3d_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAlloc));
+    IM_ASSERT(SUCCEEDED(hr));
+
+    ID3D12GraphicsCommandList* cmdList = NULL;
+    hr = d3d_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdAlloc, NULL, IID_PPV_ARGS(&cmdList));
+    IM_ASSERT(SUCCEEDED(hr));
+
+    cmdList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, NULL);
+    cmdList->ResourceBarrier(1, &barrier);
+
+    hr = cmdList->Close();
+    IM_ASSERT(SUCCEEDED(hr));
+
+    cmdQueue->ExecuteCommandLists(1, (ID3D12CommandList* const*)&cmdList);
+    hr = cmdQueue->Signal(fence, 1);
+    IM_ASSERT(SUCCEEDED(hr));
+
+    fence->SetEventOnCompletion(1, event);
+    WaitForSingleObject(event, INFINITE);
+
+    cmdList->Release();
+    cmdAlloc->Release();
+    cmdQueue->Release();
+    CloseHandle(event);
+    fence->Release();
+    uploadBuffer->Release();
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
+    ZeroMemory(&srvDesc, sizeof(srvDesc));
+    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MipLevels = 1;
-    device->CreateShaderResourceView(g_backgroundTexture, &srvDesc, g_backgroundSrvCpuDescHandle);
+    srvDesc.Texture2D.MipLevels = desc.MipLevels;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    d3d_device->CreateShaderResourceView(pTexture, &srvDesc, srv_cpu_handle);
 
-    std::cout << "Background image loaded successfully." << std::endl;
+    *out_tex_resource = pTexture;
+    *out_width = image_width;
+    *out_height = image_height;
+    stbi_image_free(image_data);
+
     return true;
-}
-
-void RenderBackground(ID3D12GraphicsCommandList* commandList) {
-    ImGui::GetBackgroundDrawList()->AddImage(
-        (void*)g_backgroundSrvGpuDescHandle.ptr,
-        ImVec2(0, 0),
-        ImVec2(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y),
-        ImVec2(0, 0),
-        ImVec2(1, 1)
-    );
 }
