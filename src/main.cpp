@@ -8,7 +8,7 @@
 #include <iostream>
 #include <filesystem>
 #include "menu/menu.h"
-#include "visuals/background.h"
+#include "rendering/background.h"
 
 struct FrameContext {
     ID3D12CommandAllocator* CommandAllocator;
@@ -83,6 +83,7 @@ int main(int, char**) {
     }
     std::cout << "Direct3D device created successfully." << std::endl;
 
+
     // Load the texture
     int my_image_width = 0;
     int my_image_height = 0;
@@ -96,7 +97,7 @@ int main(int, char**) {
     my_texture_srv_gpu_handle.ptr += (handle_increment * descriptor_index);
 
 
-    bool ret = LoadTextureFromFile("src/visuals/bg.jpg", g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture, &my_image_width, &my_image_height);
+    bool ret = LoadTextureFromFile("src/rendering/bg.jpg", g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture, &my_image_width, &my_image_height);
     IM_ASSERT(ret);
 
     // Show the window
@@ -150,9 +151,6 @@ int main(int, char**) {
         ImGui_ImplDX12_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
-
-        // Print to ensure texture handles are valid
-        std::cout << "Rendering background image with handle: " << my_texture_srv_gpu_handle.ptr << std::endl;
 
         // Render background
         ImGui::GetBackgroundDrawList()->AddImage((ImTextureID)my_texture_srv_gpu_handle.ptr, ImVec2(0, 0), ImVec2((float)my_image_width, (float)my_image_height));

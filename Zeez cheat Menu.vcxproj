@@ -140,9 +140,9 @@
     <ClInclude Include="imgui\imstb_rectpack.h" />
     <ClInclude Include="imgui\imstb_textedit.h" />
     <ClInclude Include="imgui\imstb_truetype.h" />
-    <ClInclude Include="src\visuals\background.h" />
-    <ClInclude Include="src\visuals\d3dx12.h" />
-    <ClInclude Include="src\visuals\stb_image.h" />
+    <ClInclude Include="src\rendering\background.h" />
+    <ClInclude Include="src\rendering\d3dx12.h" />
+    <ClInclude Include="src\rendering\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />
@@ -154,11 +154,11 @@
     <ClCompile Include="imgui\imgui_impl_win32.cpp" />
     <ClCompile Include="imgui\imgui_tables.cpp" />
     <ClCompile Include="imgui\imgui_widgets.cpp" />
-    <ClCompile Include="src\visuals\background.cpp" />
+    <ClCompile Include="src\rendering\background.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="src\visuals\bg.jpg" />
-    <Image Include="src\visuals\space.jpg" />
+    <Image Include="src\rendering\bg.jpg" />
+    <Image Include="src\rendering\space.jpg" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

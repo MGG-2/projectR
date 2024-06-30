@@ -42,13 +42,13 @@
     <ClInclude Include="src\menu\menu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\visuals\background.h">
+    <ClInclude Include="src\rendering\background.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\visuals\stb_image.h">
+    <ClInclude Include="src\rendering\stb_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\visuals\d3dx12.h">
+    <ClInclude Include="src\rendering\d3dx12.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -80,15 +80,15 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\visuals\background.cpp">
+    <ClCompile Include="src\rendering\background.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="src\visuals\bg.jpg">
+    <Image Include="src\rendering\bg.jpg">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="src\visuals\space.jpg">
+    <Image Include="src\rendering\space.jpg">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
