@@ -5,6 +5,7 @@
 #include <dxgi1_4.h>
 #include <tchar.h>
 #include <assert.h>
+#include <windows.h>
 #include <iostream>
 #include <filesystem>
 #include "menu/menu.h"
@@ -67,7 +68,7 @@ int main(int, char**) {
     // Create application window
     WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, _T("ImGui Example"), NULL };
     RegisterClassEx(&wc);
-    HWND hwnd = CreateWindow(wc.lpszClassName, _T("ZeeZ Menu"), WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, NULL, NULL, wc.hInstance, NULL);
+    HWND hwnd = CreateWindow(wc.lpszClassName, _T("ZeeZ Menu"), WS_POPUP | WS_MINIMIZEBOX | WS_SYSMENU, 100, 100, 1280, 800, NULL, NULL, wc.hInstance, NULL);
     if (!hwnd) {
         std::cerr << "Failed to create window." << std::endl;
         return 1;
@@ -83,7 +84,6 @@ int main(int, char**) {
     }
     std::cout << "Direct3D device created successfully." << std::endl;
 
-
     // Load the texture
     int my_image_width = 0;
     int my_image_height = 0;
@@ -95,7 +95,6 @@ int main(int, char**) {
     my_texture_srv_cpu_handle.ptr += (handle_increment * descriptor_index);
     D3D12_GPU_DESCRIPTOR_HANDLE my_texture_srv_gpu_handle = g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart();
     my_texture_srv_gpu_handle.ptr += (handle_increment * descriptor_index);
-
 
     bool ret = LoadTextureFromFile("src/rendering/bg.jpg", g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture, &my_image_width, &my_image_height);
     IM_ASSERT(ret);
@@ -121,15 +120,11 @@ int main(int, char**) {
         g_pd3dSrvDescHeap->GetCPUDescriptorHandleForHeapStart(),
         g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
 
-    // Load Fonts
-    io.Fonts->AddFontDefault();
-
     ImVec4 clear_color = ImVec4(0.3529f, 0.3529f, 0.3529f, 0.23f);
 
     // Main loop
     bool done = false;
     while (!done) {
-        // Poll and handle messages (inputs, window resize, etc.)
         MSG msg;
         while (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE)) {
             TranslateMessage(&msg);
@@ -140,25 +135,69 @@ int main(int, char**) {
         if (done)
             break;
 
-        // Handle window screen locked
         if (g_SwapChainOccluded && g_pSwapChain->Present(0, DXGI_PRESENT_TEST) == DXGI_STATUS_OCCLUDED) {
             ::Sleep(10);
             continue;
         }
         g_SwapChainOccluded = false;
 
-        // Start the Dear ImGui frame
         ImGui_ImplDX12_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        // Render background
-        ImGui::GetBackgroundDrawList()->AddImage((ImTextureID)my_texture_srv_gpu_handle.ptr, ImVec2(0, 0), ImVec2((float)my_image_width, (float)my_image_height));
+        // Custom buttons for close and minimize
+        ImGui::SetNextWindowPos(ImVec2(0, 0));
+        ImGui::SetNextWindowSize(ImVec2(1280, 30));
+        ImGui::Begin("TitleBar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground);
 
-        // Render Menu
-        RenderMenu();
+        // Set button sizes
+        ImVec2 button_size = ImVec2(20, 20);
 
-        // Rendering
+        // Draw minimize button
+        ImGui::SetCursorPosX(1270 - 2 * button_size.x - ImGui::GetStyle().ItemSpacing.x);
+        if (ImGui::Button("-", button_size)) {
+            ShowWindow(hwnd, SW_MINIMIZE);
+        }
+        
+        // Draw close button
+        ImGui::SameLine();
+        if (ImGui::Button("X", button_size)) {
+            PostMessage(hwnd, WM_CLOSE, 0, 0);
+        }
+
+        ImGui::End();
+
+        // Get the window size
+        RECT rect;
+        GetClientRect(hwnd, &rect);
+        float windowWidth = rect.right - rect.left;
+        float windowHeight = rect.bottom - rect.top;
+
+        // Calculate the aspect ratios
+        float imageAspect = (float)my_image_width / (float)my_image_height;
+        float windowAspect = windowWidth / windowHeight;
+
+        float drawWidth, drawHeight;
+        if (windowAspect > imageAspect) {
+            // Window is wider than the image
+            drawWidth = windowWidth;
+            drawHeight = windowWidth / imageAspect;
+        }
+        else {
+            // Window is taller than the image
+            drawWidth = windowHeight * imageAspect;
+            drawHeight = windowHeight;
+        }
+
+        // Calculate the position to center the image
+        float drawX = (windowWidth - drawWidth) / 2.0f;
+        float drawY = (windowHeight - drawHeight) / 2.0f;
+
+        ImGui::GetBackgroundDrawList()->AddImage((ImTextureID)my_texture_srv_gpu_handle.ptr,
+            ImVec2(drawX, drawY), ImVec2(drawX + drawWidth, drawY + drawHeight));
+
+        // RenderMenu();
+
         ImGui::Render();
 
         FrameContext* frameCtx = WaitForNextFrameResources();
@@ -189,7 +228,7 @@ int main(int, char**) {
 
         g_pd3dCommandQueue->ExecuteCommandLists(1, (ID3D12CommandList* const*)&g_pd3dCommandList);
 
-        hr = g_pSwapChain->Present(1, 0);   // Present with vsync
+        hr = g_pSwapChain->Present(1, 0);
         g_SwapChainOccluded = (hr == DXGI_STATUS_OCCLUDED);
 
         UINT64 fenceValue = g_fenceLastSignaledValue + 1;
@@ -197,7 +236,6 @@ int main(int, char**) {
         g_fenceLastSignaledValue = fenceValue;
         frameCtx->FenceValue = fenceValue;
     }
-
 
     WaitForLastSubmittedFrame();
 
@@ -402,6 +440,7 @@ FrameContext* WaitForNextFrameResources() {
     return frameCtx;
 }
 
+
 // Forward declare message handler from imgui_impl_win32.cpp
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -427,6 +466,17 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     case WM_DESTROY:
         ::PostQuitMessage(0);
         return 0;
+    case WM_CLOSE:
+        ::DestroyWindow(hWnd);
+        return 0;
+    case WM_NCHITTEST:
+    {
+        LRESULT hit = DefWindowProc(hWnd, msg, wParam, lParam);
+        if (hit == HTCLIENT)
+            hit = HTCAPTION;
+        return hit;
+    }
     }
     return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 }
+

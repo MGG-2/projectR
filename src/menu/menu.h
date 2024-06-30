@@ -6,5 +6,6 @@
 
 void SetupImGuiStyle();
 void RenderMenu();
+void RenderCustomTitleBar(const char* title, ImVec2 windowSize);
 
 #endif // MENU_H
