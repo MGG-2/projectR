@@ -45,6 +45,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE g_textureSrvGpuHandle = {};
 
 bool LoadTextureFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_CPU_DESCRIPTOR_HANDLE srv_cpu_handle, ID3D12Resource** out_tex_resource, int* out_width, int* out_height);
 
+
 // Forward Declarations
 bool CreateDeviceD3D(HWND hWnd);
 void CleanupDeviceD3D();
@@ -55,6 +56,8 @@ FrameContext* WaitForNextFrameResources();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // Main Function
+bool LoadTextureFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_CPU_DESCRIPTOR_HANDLE srv_cpu_handle, ID3D12Resource** out_tex_resource, int* out_width, int* out_height);
+
 int main(int, char**) {
     std::cout << "Starting application..." << std::endl;
 
@@ -92,7 +95,7 @@ int main(int, char**) {
     D3D12_GPU_DESCRIPTOR_HANDLE my_texture_srv_gpu_handle = g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart();
     my_texture_srv_gpu_handle.ptr += (handle_increment * descriptor_index);
 
-    bool ret = LoadTextureFromFile("visuals/background.jpg", g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture, &my_image_width, &my_image_height);
+    bool ret = LoadTextureFromFile("src/visuals/background.jpg", g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture, &my_image_width, &my_image_height);
     IM_ASSERT(ret);
 
     // Show the window
@@ -147,16 +150,11 @@ int main(int, char**) {
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
+        // Render background
+        ImGui::GetBackgroundDrawList()->AddImage((ImTextureID)my_texture_srv_gpu_handle.ptr, ImVec2(0, 0), ImVec2((float)my_image_width, (float)my_image_height));
+
         // Render Menu
         RenderMenu();
-
-        // Render Texture
-        ImGui::Begin("DirectX12 Texture Test");
-        ImGui::Text("CPU handle = %p", my_texture_srv_cpu_handle.ptr);
-        ImGui::Text("GPU handle = %p", my_texture_srv_gpu_handle.ptr);
-        ImGui::Text("size = %d x %d", my_image_width, my_image_height);
-        ImGui::Image((ImTextureID)my_texture_srv_gpu_handle.ptr, ImVec2((float)my_image_width, (float)my_image_height));
-        ImGui::End();
 
         // Rendering
         ImGui::Render();
@@ -204,7 +202,7 @@ int main(int, char**) {
 
     CleanupDeviceD3D();
     ::DestroyWindow(hwnd);
-    ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
+    ::UnregisterClass(wc.lpszClassName, wc.hInstance);
 
     return 0;
 }
