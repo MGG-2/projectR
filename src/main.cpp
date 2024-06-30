@@ -95,7 +95,7 @@ int main(int, char**) {
     D3D12_GPU_DESCRIPTOR_HANDLE my_texture_srv_gpu_handle = g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart();
     my_texture_srv_gpu_handle.ptr += (handle_increment * descriptor_index);
 
-    bool ret = LoadTextureFromFile("src/visuals/background.jpg", g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture, &my_image_width, &my_image_height);
+    bool ret = LoadTextureFromFile("src/visuals/bg.jpg", g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture, &my_image_width, &my_image_height);
     IM_ASSERT(ret);
 
     // Show the window

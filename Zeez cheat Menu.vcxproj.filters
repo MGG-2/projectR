@@ -85,7 +85,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="src\visuals\background.jpg">
+    <Image Include="src\visuals\bg.jpg">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

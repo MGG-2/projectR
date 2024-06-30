@@ -157,7 +157,7 @@
     <ClCompile Include="src\visuals\background.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="src\visuals\background.jpg" />
+    <Image Include="src\visuals\bg.jpg" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
