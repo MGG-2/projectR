@@ -51,14 +51,16 @@ void UpdateSubresources(
     pCmdList->ResourceBarrier(1, &barrier);
 }
 
-bool LoadTextureFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_CPU_DESCRIPTOR_HANDLE srv_cpu_handle, ID3D12Resource** out_tex_resource, int* out_width, int* out_height)
-{
-    // Load from disk into a raw RGBA buffer
+bool LoadTextureFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_CPU_DESCRIPTOR_HANDLE srv_cpu_handle, ID3D12Resource** out_tex_resource, int* out_width, int* out_height) {
     int image_width = 0;
     int image_height = 0;
     unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
-    if (image_data == NULL)
+    if (image_data == NULL) {
+        std::cerr << "Failed to load image: " << filename << std::endl;
         return false;
+    }
+
+    std::cout << "Loaded image: " << filename << " with width: " << image_width << " and height: " << image_height << std::endl;
 
 
     // Create texture resource
