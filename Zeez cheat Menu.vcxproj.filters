@@ -88,5 +88,8 @@
     <Image Include="src\visuals\bg.jpg">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="src\visuals\space.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

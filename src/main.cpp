@@ -95,6 +95,7 @@ int main(int, char**) {
     D3D12_GPU_DESCRIPTOR_HANDLE my_texture_srv_gpu_handle = g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart();
     my_texture_srv_gpu_handle.ptr += (handle_increment * descriptor_index);
 
+
     bool ret = LoadTextureFromFile("src/visuals/bg.jpg", g_pd3dDevice, my_texture_srv_cpu_handle, &my_texture, &my_image_width, &my_image_height);
     IM_ASSERT(ret);
 
@@ -150,6 +151,9 @@ int main(int, char**) {
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
+        // Print to ensure texture handles are valid
+        std::cout << "Rendering background image with handle: " << my_texture_srv_gpu_handle.ptr << std::endl;
+
         // Render background
         ImGui::GetBackgroundDrawList()->AddImage((ImTextureID)my_texture_srv_gpu_handle.ptr, ImVec2(0, 0), ImVec2((float)my_image_width, (float)my_image_height));
 
@@ -195,6 +199,7 @@ int main(int, char**) {
         g_fenceLastSignaledValue = fenceValue;
         frameCtx->FenceValue = fenceValue;
     }
+
 
     WaitForLastSubmittedFrame();
 

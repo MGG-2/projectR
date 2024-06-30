@@ -4,53 +4,6 @@
 #include "stb_image.h"
 #include <iostream>
 
-static ID3D12Resource* g_backgroundTexture = nullptr;
-static D3D12_CPU_DESCRIPTOR_HANDLE g_backgroundSrvCpuDescHandle;
-static D3D12_GPU_DESCRIPTOR_HANDLE g_backgroundSrvGpuDescHandle;
-extern ID3D12Device* g_pd3dDevice;
-extern ID3D12DescriptorHeap* g_pd3dSrvDescHeap;
-
-inline UINT64 GetRequiredIntermediateSize(ID3D12Resource* pResource, UINT FirstSubresource, UINT NumSubresources) {
-    D3D12_RESOURCE_DESC desc = pResource->GetDesc();
-    UINT64 RequiredSize = 0;
-    ID3D12Device* pDevice = nullptr;
-    pResource->GetDevice(IID_PPV_ARGS(&pDevice));
-    pDevice->GetCopyableFootprints(&desc, FirstSubresource, NumSubresources, 0, nullptr, nullptr, nullptr, &RequiredSize);
-    return RequiredSize;
-}
-
-void UpdateSubresources(
-    ID3D12GraphicsCommandList* pCmdList,
-    ID3D12Resource* pDstResource,
-    ID3D12Resource* pIntermediate,
-    UINT64 IntermediateOffset,
-    UINT FirstSubresource,
-    UINT NumSubresources,
-    D3D12_SUBRESOURCE_DATA* pSrcData)
-{
-    UINT64 RequiredSize = GetRequiredIntermediateSize(pDstResource, FirstSubresource, NumSubresources);
-    BYTE* pData;
-    D3D12_RANGE range = { 0, static_cast<SIZE_T>(RequiredSize) };
-    HRESULT hr = pIntermediate->Map(0, &range, reinterpret_cast<void**>(&pData));
-    if (FAILED(hr)) {
-        std::cerr << "Failed to map intermediate resource: " << hr << std::endl;
-        return;
-    }
-    for (UINT i = 0; i < NumSubresources; ++i) {
-        D3D12_MEMCPY_DEST DestData = { pData + pSrcData[i].SlicePitch * i, pSrcData[i].RowPitch, pSrcData[i].SlicePitch };
-        memcpy(DestData.pData, pSrcData[i].pData, pSrcData[i].SlicePitch);
-    }
-    pIntermediate->Unmap(0, nullptr);
-
-    D3D12_RESOURCE_BARRIER barrier = {};
-    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    barrier.Transition.pResource = pDstResource;
-    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
-    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-    barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-    pCmdList->ResourceBarrier(1, &barrier);
-}
-
 bool LoadTextureFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_CPU_DESCRIPTOR_HANDLE srv_cpu_handle, ID3D12Resource** out_tex_resource, int* out_width, int* out_height) {
     int image_width = 0;
     int image_height = 0;
@@ -61,7 +14,6 @@ bool LoadTextureFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_C
     }
 
     std::cout << "Loaded image: " << filename << " with width: " << image_width << " and height: " << image_height << std::endl;
-
 
     // Create texture resource
     D3D12_HEAP_PROPERTIES props;
@@ -85,8 +37,13 @@ bool LoadTextureFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_C
     desc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
     ID3D12Resource* pTexture = NULL;
-    d3d_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc,
+    HRESULT hr = d3d_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc,
         D3D12_RESOURCE_STATE_COPY_DEST, NULL, IID_PPV_ARGS(&pTexture));
+    if (FAILED(hr)) {
+        std::cerr << "Failed to create committed resource: " << hr << std::endl;
+        stbi_image_free(image_data);
+        return false;
+    }
 
     // Create a temporary upload resource to move the data in
     UINT uploadPitch = (image_width * 4 + D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1u);
@@ -108,15 +65,26 @@ bool LoadTextureFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_C
     props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
     ID3D12Resource* uploadBuffer = NULL;
-    HRESULT hr = d3d_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc,
+    hr = d3d_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc,
         D3D12_RESOURCE_STATE_GENERIC_READ, NULL, IID_PPV_ARGS(&uploadBuffer));
-    IM_ASSERT(SUCCEEDED(hr));
+    if (FAILED(hr)) {
+        std::cerr << "Failed to create upload buffer: " << hr << std::endl;
+        pTexture->Release();
+        stbi_image_free(image_data);
+        return false;
+    }
 
     // Write pixels into the upload resource
     void* mapped = NULL;
     D3D12_RANGE range = { 0, uploadSize };
     hr = uploadBuffer->Map(0, &range, &mapped);
-    IM_ASSERT(SUCCEEDED(hr));
+    if (FAILED(hr)) {
+        std::cerr << "Failed to map upload buffer: " << hr << std::endl;
+        uploadBuffer->Release();
+        pTexture->Release();
+        stbi_image_free(image_data);
+        return false;
+    }
     for (int y = 0; y < image_height; y++)
         memcpy((void*)((uintptr_t)mapped + y * uploadPitch), image_data + y * image_width * 4, image_width * 4);
     uploadBuffer->Unmap(0, &range);
@@ -144,13 +112,31 @@ bool LoadTextureFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_C
     barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
     barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
+    // Ensure the upload buffer is released correctly
+    uploadBuffer->Unmap(0, nullptr);
+    std::cout << "Texture data mapped and uploaded successfully." << std::endl;
+
+
     // Create a temporary command queue to do the copy with
     ID3D12Fence* fence = NULL;
     hr = d3d_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
-    IM_ASSERT(SUCCEEDED(hr));
+    if (FAILED(hr)) {
+        std::cerr << "Failed to create fence: " << hr << std::endl;
+        uploadBuffer->Release();
+        pTexture->Release();
+        stbi_image_free(image_data);
+        return false;
+    }
 
     HANDLE event = CreateEvent(0, 0, 0, 0);
-    IM_ASSERT(event != NULL);
+    if (event == NULL) {
+        std::cerr << "Failed to create event." << std::endl;
+        fence->Release();
+        uploadBuffer->Release();
+        pTexture->Release();
+        stbi_image_free(image_data);
+        return false;
+    }
 
     D3D12_COMMAND_QUEUE_DESC queueDesc = {};
     queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
@@ -159,30 +145,83 @@ bool LoadTextureFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_C
 
     ID3D12CommandQueue* cmdQueue = NULL;
     hr = d3d_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&cmdQueue));
-    IM_ASSERT(SUCCEEDED(hr));
+    if (FAILED(hr)) {
+        std::cerr << "Failed to create command queue: " << hr << std::endl;
+        CloseHandle(event);
+        fence->Release();
+        uploadBuffer->Release();
+        pTexture->Release();
+        stbi_image_free(image_data);
+        return false;
+    }
 
     ID3D12CommandAllocator* cmdAlloc = NULL;
     hr = d3d_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAlloc));
-    IM_ASSERT(SUCCEEDED(hr));
+    if (FAILED(hr)) {
+        std::cerr << "Failed to create command allocator: " << hr << std::endl;
+        cmdQueue->Release();
+        CloseHandle(event);
+        fence->Release();
+        uploadBuffer->Release();
+        pTexture->Release();
+        stbi_image_free(image_data);
+        return false;
+    }
 
     ID3D12GraphicsCommandList* cmdList = NULL;
     hr = d3d_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdAlloc, NULL, IID_PPV_ARGS(&cmdList));
-    IM_ASSERT(SUCCEEDED(hr));
+    if (FAILED(hr)) {
+        std::cerr << "Failed to create command list: " << hr << std::endl;
+        cmdAlloc->Release();
+        cmdQueue->Release();
+        CloseHandle(event);
+        fence->Release();
+        uploadBuffer->Release();
+        pTexture->Release();
+        stbi_image_free(image_data);
+        return false;
+    }
 
     cmdList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, NULL);
     cmdList->ResourceBarrier(1, &barrier);
 
     hr = cmdList->Close();
-    IM_ASSERT(SUCCEEDED(hr));
+    if (FAILED(hr)) {
+        std::cerr << "Failed to close command list: " << hr << std::endl;
+        cmdList->Release();
+        cmdAlloc->Release();
+        cmdQueue->Release();
+        CloseHandle(event);
+        fence->Release();
+        uploadBuffer->Release();
+        pTexture->Release();
+        stbi_image_free(image_data);
+        return false;
+    }
 
     // Execute the copy
     cmdQueue->ExecuteCommandLists(1, (ID3D12CommandList* const*)&cmdList);
     hr = cmdQueue->Signal(fence, 1);
-    IM_ASSERT(SUCCEEDED(hr));
+    if (FAILED(hr)) {
+        std::cerr << "Failed to signal command queue: " << hr << std::endl;
+        cmdList->Release();
+        cmdAlloc->Release();
+        cmdQueue->Release();
+        CloseHandle(event);
+        fence->Release();
+        uploadBuffer->Release();
+        pTexture->Release();
+        stbi_image_free(image_data);
+        return false;
+    }
+
+    std::cout << "Command list executed and fence signaled successfully." << std::endl;
 
     // Wait for everything to complete
     fence->SetEventOnCompletion(1, event);
     WaitForSingleObject(event, INFINITE);
+
+    std::cout << "Fence signaled and waited successfully." << std::endl;
 
     // Tear down our temporary command queue and release the upload resource
     cmdList->Release();
@@ -191,6 +230,8 @@ bool LoadTextureFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_C
     CloseHandle(event);
     fence->Release();
     uploadBuffer->Release();
+
+    std::cout << "Temporary command queue and upload resource released successfully." << std::endl;
 
     // Create a shader resource view for the texture
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
@@ -202,11 +243,13 @@ bool LoadTextureFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_C
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     d3d_device->CreateShaderResourceView(pTexture, &srvDesc, srv_cpu_handle);
 
-    // Return results
     *out_tex_resource = pTexture;
     *out_width = image_width;
     *out_height = image_height;
     stbi_image_free(image_data);
+
+    std::cout << "Shader resource view created successfully." << std::endl;
+
 
     return true;
 }
