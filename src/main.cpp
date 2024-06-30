@@ -180,11 +180,14 @@ int main(int, char**) {
         barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
         barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
         g_pd3dCommandList->ResourceBarrier(1, &barrier);
-        g_pd3dCommandList->Close();
+        HRESULT hr = g_pd3dCommandList->Close();
+        if (FAILED(hr)) {
+            std::cerr << "Failed to close command list: " << hr << std::endl;
+        }
 
         g_pd3dCommandQueue->ExecuteCommandLists(1, (ID3D12CommandList* const*)&g_pd3dCommandList);
 
-        HRESULT hr = g_pSwapChain->Present(1, 0);   // Present with vsync
+        hr = g_pSwapChain->Present(1, 0);   // Present with vsync
         g_SwapChainOccluded = (hr == DXGI_STATUS_OCCLUDED);
 
         UINT64 fenceValue = g_fenceLastSignaledValue + 1;
