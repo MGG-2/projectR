@@ -1,15 +1,7 @@
-#pragma once
 #ifndef ESP_H
 #define ESP_H
 
-#include "../../imgui/imgui.h"
-
-class ESP
-{
-public:
-    ESP();
-    ~ESP();
-    void Render();
-};
+// Function declaration for rendering the ESP layout
+void RenderESP();
 
 #endif // ESP_H

@@ -45,8 +45,6 @@ ID3D12Resource* g_texture = nullptr;
 D3D12_CPU_DESCRIPTOR_HANDLE g_textureSrvCpuHandle = {};
 D3D12_GPU_DESCRIPTOR_HANDLE g_textureSrvGpuHandle = {};
 
-ESP esp;
-
 bool LoadTextureFromFile(const char* filename, ID3D12Device* d3d_device, D3D12_CPU_DESCRIPTOR_HANDLE srv_cpu_handle, ID3D12Resource** out_tex_resource, int* out_width, int* out_height);
 
 
@@ -200,7 +198,9 @@ int main(int, char**) {
             ImVec2(drawX, drawY), ImVec2(drawX + drawWidth, drawY + drawHeight));
 
         //RenderMenu();
-        esp.Render();
+        
+        // Render the ESP
+        RenderESP();
 
         ImGui::Render();
 
