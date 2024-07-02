@@ -90,8 +90,8 @@ void RenderMenu() {
                 ImGui::Spacing();
 
                 settingStyle();
-                ImGui::BeginChild("Enable Box ESP", ImVec2(0, 50), true);
-                customCheckbox("Enable Box ESP", &enableBoxESP);
+                ImGui::BeginChild("Box", ImVec2(0, 50), true);
+                customCheckbox("Box", &enableBoxESP);
                 ImGui::SameLine();
                 ImGui::EndChild();
                 endSettingStyle();
@@ -99,8 +99,8 @@ void RenderMenu() {
                 ImGui::Spacing();
 
                 settingStyle();
-                ImGui::BeginChild("Enable Health ESP", ImVec2(0, 50), true);
-                customCheckbox("Enable Health ESP", &enableHealthESP);
+                ImGui::BeginChild("Health", ImVec2(0, 50), true);
+                customCheckbox("Health", &enableHealthESP);
                 ImGui::SameLine();
                 ImGui::EndChild();
                 endSettingStyle();
@@ -108,8 +108,8 @@ void RenderMenu() {
                 ImGui::Spacing();
 
                 settingStyle();
-                ImGui::BeginChild("Enable Name ESP", ImVec2(0, 50), true);
-                customCheckbox("Enable Name ESP", &enableNameESP);
+                ImGui::BeginChild("Name", ImVec2(0, 50), true);
+                customCheckbox("Name", &enableNameESP);
                 ImGui::SameLine();
                 ImGui::EndChild();
                 endSettingStyle();
@@ -117,9 +117,9 @@ void RenderMenu() {
                 ImGui::Spacing();
 
                 settingStyle();
-                ImGui::BeginChild("ESP Distance", ImVec2(0, 50), true);
+                ImGui::BeginChild("Distance", ImVec2(0, 50), true);
                 ImGui::PushItemWidth(150);
-                ImGui::SliderFloat("ESP Distance", &espDistance, 50.0f, 1000.0f, "%.1f");
+                ImGui::SliderFloat("Distance", &espDistance, 50.0f, 1000.0f, "%.1f");
                 ImGui::PopItemWidth();
                 ImGui::SameLine();
                 ImGui::EndChild();
