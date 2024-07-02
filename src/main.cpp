@@ -9,7 +9,8 @@
 #include <iostream>
 #include <filesystem>
 #include "menu/menu.h"
-#include "menu/esp.h"
+#include "menu/esp-preview.h"
+#include "menu/editor.h"
 #include "rendering/background.h"
 
 struct FrameContext {
@@ -123,6 +124,7 @@ int main(int, char**) {
 
     ImVec4 clear_color = ImVec4(0.3529f, 0.3529f, 0.3529f, 0.23f);
 
+
     // Main loop
     bool done = false;
     while (!done) {
@@ -199,8 +201,9 @@ int main(int, char**) {
 
         //RenderMenu();
         
-        // Render the ESP
+        // Render the ESP preview window 
         RenderESP();
+        RenderSettings();
 
         ImGui::Render();
 

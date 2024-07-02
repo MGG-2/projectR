@@ -131,7 +131,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\menu\esp.h" />
+    <ClInclude Include="src\menu\editor.h" />
+    <ClInclude Include="src\menu\esp-preview.h" />
     <ClInclude Include="src\menu\menu.h" />
     <ClInclude Include="imgui\imconfig.h" />
     <ClInclude Include="imgui\imgui.h" />
@@ -147,7 +148,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\menu\esp.cpp" />
+    <ClCompile Include="src\menu\editor.cpp" />
+    <ClCompile Include="src\menu\esp-preview.cpp" />
     <ClCompile Include="src\menu\menu.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
     <ClCompile Include="imgui\imgui_demo.cpp" />
@@ -161,6 +163,10 @@
   <ItemGroup>
     <Image Include="src\rendering\bg.jpg" />
     <Image Include="src\rendering\space.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="src\fonts\AWAKENNING.ttf" />
+    <Font Include="src\fonts\Bad Coma.ttf" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

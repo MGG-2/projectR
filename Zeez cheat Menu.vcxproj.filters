@@ -51,7 +51,10 @@
     <ClInclude Include="src\rendering\d3dx12.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\menu\esp.h">
+    <ClInclude Include="src\menu\esp-preview.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\menu\editor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -86,7 +89,10 @@
     <ClCompile Include="src\rendering\background.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\menu\esp.cpp">
+    <ClCompile Include="src\menu\esp-preview.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\menu\editor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -97,5 +103,9 @@
     <Image Include="src\rendering\space.jpg">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="src\fonts\AWAKENNING.ttf" />
+    <Font Include="src\fonts\Bad Coma.ttf" />
   </ItemGroup>
 </Project>

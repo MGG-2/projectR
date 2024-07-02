@@ -71,67 +71,9 @@ void RenderMenu() {
 
     if (ImGui::Begin("##ZeeZ Menu", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize)) {
 
-        RenderCustomTitleBar("ZeeZ Menu", windowSize);
+        //RenderCustomTitleBar("ZeeZ Menu", windowSize);
 
-        ImGui::Columns(2, NULL, false);
-        ImGui::SetColumnWidth(0, 200);
-
-        // Vertical Tabs
-        ImGui::BeginChild("##LeftSide", ImVec2(0, 0), true);
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10, 10));
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10, 10));
-        if (ImGui::Selectable("Rage", true, 0, ImVec2(0, 40))) {}
-        ImGui::Selectable("Anti-hit", false, 0, ImVec2(0, 40));
-        ImGui::Selectable("Visuals", false, 0, ImVec2(0, 40));
-        ImGui::Selectable("Misc", false, 0, ImVec2(0, 40));
-        ImGui::Selectable("Skins", false, 0, ImVec2(0, 40));
-        ImGui::Selectable("Configs", false, 0, ImVec2(0, 40));
-        ImGui::PopStyleVar(2);
-        ImGui::EndChild();
-
-        ImGui::NextColumn();
-
-        ImGui::BeginChild("##Content", ImVec2(0, 0), true);
-
-        // Main Section
-        ImGui::Text("Main");
-        ImGui::Separator();
-        static bool rage_enabled = false;
-        ImGui::Checkbox("Enable", &rage_enabled);
-
-        static int yaw_add = 0;
-        ImGui::SliderInt("Yaw add", &yaw_add, 0, 360);
-
-        // Misc Section
-        ImGui::Text("Misc.");
-        ImGui::Separator();
-        static bool misc_disable = false;
-        ImGui::Checkbox("Disable", &misc_disable);
-
-        static const char* multi_options[] = { "None", "Option1", "Option2" };
-        static int multi_selected = 0;
-        ImGui::Combo("Multi", &multi_selected, multi_options, IM_ARRAYSIZE(multi_options));
-
-        static bool tracer_enabled = false;
-        ImGui::Checkbox("Tracer", &tracer_enabled);
-
-        // Fakelag Section
-        ImGui::Text("Fakelag");
-        ImGui::Separator();
-        static const char* fakelag_types[] = { "On frame", "Type1", "Type2" };
-        static int fakelag_type = 0;
-        ImGui::Combo("Type", &fakelag_type, fakelag_types, IM_ARRAYSIZE(fakelag_types));
-
-        static float jitter_amount = 0.0f;
-        ImGui::SliderFloat("Jitter", &jitter_amount, 0.0f, 1.0f);
-
-        ImGui::Text("Keybind: ");
-        ImGui::SameLine();
-        if (ImGui::Button("None")) {
-            // Keybind logic here
-        }
-
-        ImGui::EndChild();
+        
 
         ImGui::End();
     }
