@@ -160,7 +160,6 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="src\rendering\bg.jpg" />
-    <Image Include="src\rendering\space.jpg" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="src\fonts\AWAKENNING.ttf" />

@@ -3,26 +3,25 @@
 #include "../../imgui/imgui_impl_dx12.h"
 #include "../../imgui/imgui.h"
 #include <d3d12.h>
-#include "esp-preview.h" // Include the header for the ESP preview
+#include "esp-preview.h"
 
-// Custom colors
-ImVec4 mainColor = ImVec4(0.13f, 0.14f, 0.15f, 1.00f);
+// Custom colors based on the provided example
+ImVec4 mainColor = ImVec4(0.13f, 0.13f, 0.14f, 1.00f);
 ImVec4 accentColor = ImVec4(0.29f, 0.29f, 0.29f, 1.00f);
 ImVec4 textColor = ImVec4(0.85f, 0.85f, 0.85f, 1.00f);
 ImVec4 darkColor = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
 ImVec4 lightColor = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
 ImVec4 buttonColor = ImVec4(0.20f, 0.20f, 0.22f, 1.00f);
 
-// ESP settings
 bool showESPPreview = false;
-float espDistance = 100.0f; // ESP distance setting
-bool enableBoxESP = true;   // Toggle for Box ESP
-bool enableHealthESP = true; // Toggle for Health ESP
-bool enableNameESP = true;   // Toggle for Name ESP
+float espDistance = 100.0f;
+bool enableBoxESP = true;
+bool enableHealthESP = true;
+bool enableNameESP = true;
 
 void SetupImGuiStyle() {
     ImGuiStyle& style = ImGui::GetStyle();
-    style.WindowRounding = 7.0f;
+    style.WindowRounding = 5.0f;
     style.FrameRounding = 5.0f;
     style.GrabRounding = 5.0f;
     style.ChildRounding = 5.0f;
@@ -60,8 +59,8 @@ void RenderMenu() {
                 // Render each setting with custom styled checkboxes
                 auto settingStyle = []() {
                     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5.0f);
-                    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.13f, 0.14f, 0.15f, 1.00f));
-                    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.29f, 0.29f, 0.29f, 1.00f));
+                    ImGui::PushStyleColor(ImGuiCol_ChildBg, mainColor);
+                    ImGui::PushStyleColor(ImGuiCol_Border, accentColor);
                     };
 
                 auto endSettingStyle = []() {
@@ -72,10 +71,10 @@ void RenderMenu() {
                 // Checkbox with custom style to match the image
                 auto customCheckbox = [](const char* label, bool* v) {
                     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 12.0f);
-                    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.20f, 0.20f, 0.20f, 1.00f));
-                    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.20f, 0.20f, 0.20f, 1.00f));
-                    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.20f, 0.20f, 0.20f, 1.00f));
-                    ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(0.25f, 0.78f, 0.25f, 1.00f));
+                    ImGui::PushStyleColor(ImGuiCol_FrameBg, darkColor);
+                    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, darkColor);
+                    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, darkColor);
+                    ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(0.88f, 0.88f, 0.88f, 1.00f));
                     ImGui::Checkbox(label, v);
                     ImGui::PopStyleColor(4);
                     ImGui::PopStyleVar();
@@ -83,7 +82,7 @@ void RenderMenu() {
 
                 settingStyle();
                 ImGui::BeginChild("preview ESP", ImVec2(0, 50), true);
-                customCheckbox("preview ESP", &showESPPreview);
+                customCheckbox("Preview ESP", &showESPPreview);
                 ImGui::SameLine();
                 ImGui::EndChild();
                 endSettingStyle();
@@ -137,6 +136,7 @@ void RenderMenu() {
 
     // Render the ESP preview window if the checkbox is checked
     if (showESPPreview) {
-        preview(); // Call the preview function from esp-preview.cpp
+        preview();
     }
 }
+

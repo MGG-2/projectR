@@ -94,9 +94,6 @@
     <Image Include="src\rendering\bg.jpg">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="src\rendering\space.jpg">
-      <Filter>Resource Files</Filter>
-    </Image>
   </ItemGroup>
   <ItemGroup>
     <Font Include="src\fonts\AWAKENNING.ttf" />
