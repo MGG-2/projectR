@@ -1,6 +1,24 @@
 #include "../../imgui/imgui.h"
 #include "esp-preview.h"
 #include "menu.h"
+#include <map>
+#include <string>
+
+// Define a structure to hold the position state of each draggable item
+struct DragDropItem {
+    std::string id;
+    ImVec2 position;
+    bool isDefault;
+};
+
+std::map<std::string, DragDropItem> itemPositions;
+
+// Offset management for each column
+struct ColumnOffset {
+    float offset;
+};
+
+std::map<std::string, ColumnOffset> columnOffsets;
 
 void configureStyle() {
     ImGuiStyle& style = ImGui::GetStyle();
@@ -49,7 +67,7 @@ void preview() {
     configureStyle();
 
     ImGui::SetNextWindowSize(ImVec2(250, 400));
-    ImGui::Begin("ESP Preview", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove);
+    ImGui::Begin("ESP Preview", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
 
     ImVec2 windowSize = ImGui::GetWindowSize();
     ImVec2 windowPos = ImGui::GetWindowPos();
@@ -76,104 +94,84 @@ void preview() {
     float columnBottomY = box_bottom_y + 15;
     float elementSpacing = 20;
 
-    if (enableNameESP) {
-        ImGui::SetCursorPos(ImVec2(centerX - 20 - windowPos.x, columnTopY - windowPos.y));
-        ImGui::Text("Player");
-        if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
-            const char* payload = "Player";
-            ImGui::SetDragDropPayload("DND_NAME", payload, strlen(payload) + 1);
+    // Initialize default positions for items and column offsets
+    if (itemPositions.empty()) {
+        itemPositions["DND_NAME"] = { "DND_NAME", ImVec2(centerX - 20, columnTopY), true };
+        itemPositions["DND_DISTANCE"] = { "DND_DISTANCE", ImVec2(columnLeftX, box_top_y + 10), true };
+        itemPositions["DND_PING"] = { "DND_PING", ImVec2(columnLeftX, box_top_y + 10 + elementSpacing), true };
+        itemPositions["DND_HEALTH"] = { "DND_HEALTH", ImVec2(centerX - (box_right_x - box_left_x) / 2.0f, columnBottomY), true };
+    }
+
+    if (columnOffsets.empty()) {
+        columnOffsets["left_col"] = { 0.0f };
+        columnOffsets["right_col"] = { 0.0f };
+        columnOffsets["top_col"] = { 0.0f };
+        columnOffsets["bottom_col"] = { 0.0f };
+    }
+
+    // Display and handle dragging for each item
+    for (auto& item : itemPositions) {
+        ImGui::SetCursorPos(ImVec2(item.second.position.x - windowPos.x, item.second.position.y - windowPos.y));
+        if (item.first == "DND_NAME") {
             ImGui::Text("Player");
-            ImGui::EndDragDropSource();
         }
-    }
-
-    float leftYOffset = box_top_y + 10;
-    if (enableDistanceESP) {
-        ImGui::SetCursorPos(ImVec2(columnLeftX - windowPos.x, leftYOffset - windowPos.y));
-        ImGui::Text("100m");
-        if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
-            const char* payload = "100m";
-            ImGui::SetDragDropPayload("DND_DISTANCE", payload, strlen(payload) + 1);
+        else if (item.first == "DND_DISTANCE") {
             ImGui::Text("100m");
-            ImGui::EndDragDropSource();
         }
-        leftYOffset += elementSpacing;
-    }
-    if (enablePingESP) {
-        ImGui::SetCursorPos(ImVec2(columnLeftX - windowPos.x, leftYOffset - windowPos.y));
-        ImGui::Text("Ping");
-        if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
-            const char* payload = "Ping";
-            ImGui::SetDragDropPayload("DND_PING", payload, strlen(payload) + 1);
+        else if (item.first == "DND_PING") {
             ImGui::Text("Ping");
-            ImGui::EndDragDropSource();
         }
-        leftYOffset += elementSpacing;
-    }
-
-    if (enableHealthESP) {
-        float health = 75.0f; // Example health value
-        ImGui::SetCursorPos(ImVec2(centerX - (box_right_x - box_left_x) / 2.0f - windowPos.x, columnBottomY - windowPos.y));
-        ImGui::ProgressBar(health / 100.0f, ImVec2(box_right_x - box_left_x, 5), "");
-        if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
-            ImGui::SetDragDropPayload("DND_HEALTH", &health, sizeof(health));
+        else if (item.first == "DND_HEALTH") {
+            float health = 75.0f; // Example health value
             ImGui::ProgressBar(health / 100.0f, ImVec2(box_right_x - box_left_x, 5), "");
+        }
+
+        if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
+            ImGui::SetDragDropPayload(item.second.id.c_str(), item.second.id.c_str(), item.second.id.size() + 1);
+            ImGui::Text("%s", item.second.id.c_str());
             ImGui::EndDragDropSource();
         }
     }
 
     // Create drop targets for each column
+    auto processDropTarget = [&](const char* columnId, ImVec2 dropPos, float& columnOffset) {
+        ImGui::InvisibleButton(columnId, ImVec2(40, windowSize.y));
+        if (ImGui::BeginDragDropTarget()) {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_NAME")) {
+                itemPositions["DND_NAME"].position = ImVec2(dropPos.x, dropPos.y + columnOffset);
+                itemPositions["DND_NAME"].isDefault = false;
+                columnOffset += elementSpacing;
+            }
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_DISTANCE")) {
+                itemPositions["DND_DISTANCE"].position = ImVec2(dropPos.x, dropPos.y + columnOffset);
+                itemPositions["DND_DISTANCE"].isDefault = false;
+                columnOffset += elementSpacing;
+            }
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_PING")) {
+                itemPositions["DND_PING"].position = ImVec2(dropPos.x, dropPos.y + columnOffset);
+                itemPositions["DND_PING"].isDefault = false;
+                columnOffset += elementSpacing;
+            }
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_HEALTH")) {
+                itemPositions["DND_HEALTH"].position = ImVec2(dropPos.x, dropPos.y + columnOffset);
+                itemPositions["DND_HEALTH"].isDefault = false;
+                columnOffset += elementSpacing;
+            }
+            ImGui::EndDragDropTarget();
+        }
+        };
+
     ImGui::SetCursorPos(ImVec2(columnLeftX - windowPos.x, box_top_y - windowPos.y));
-    ImGui::InvisibleButton("left_col", ImVec2(40, windowSize.y));
-    if (ImGui::BeginDragDropTarget()) {
-        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_DISTANCE")) {
-            IM_ASSERT(payload->DataSize == strlen("100m") + 1);
-            const char* payload_data = (const char*)payload->Data;
-            // Process the payload data
-        }
-        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_PING")) {
-            IM_ASSERT(payload->DataSize == strlen("Ping") + 1);
-            const char* payload_data = (const char*)payload->Data;
-            // Process the payload data
-        }
-        ImGui::EndDragDropTarget();
-    }
+    processDropTarget("left_col", ImVec2(columnLeftX, box_top_y), columnOffsets["left_col"].offset);
 
     ImGui::SetCursorPos(ImVec2(columnRightX - windowPos.x, box_top_y - windowPos.y));
-    ImGui::InvisibleButton("right_col", ImVec2(40, windowSize.y));
-    if (ImGui::BeginDragDropTarget()) {
-        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_OTHER")) {
-            IM_ASSERT(payload->DataSize == strlen("Other") + 1);
-            const char* payload_data = (const char*)payload->Data;
-            // Process the payload data
-        }
-        ImGui::EndDragDropTarget();
-    }
+    processDropTarget("right_col", ImVec2(columnRightX, box_top_y), columnOffsets["right_col"].offset);
 
     ImGui::SetCursorPos(ImVec2(box_left_x - windowPos.x, columnTopY - windowPos.y));
-    ImGui::InvisibleButton("top_col", ImVec2(box_right_x - box_left_x, 30));
-    if (ImGui::BeginDragDropTarget()) {
-        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_NAME")) {
-            IM_ASSERT(payload->DataSize == strlen("Player") + 1);
-            const char* payload_data = (const char*)payload->Data;
-            // Process the payload data
-        }
-        ImGui::EndDragDropTarget();
-    }
+    processDropTarget("top_col", ImVec2(box_left_x, columnTopY), columnOffsets["top_col"].offset);
 
     ImGui::SetCursorPos(ImVec2(box_left_x - windowPos.x, columnBottomY - windowPos.y));
-    ImGui::InvisibleButton("bottom_col", ImVec2(box_right_x - box_left_x, 30));
-    if (ImGui::BeginDragDropTarget()) {
-        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_HEALTH")) {
-            IM_ASSERT(payload->DataSize == sizeof(float));
-            const float* payload_data = (const float*)payload->Data;
-            // Process the payload data
-        }
-        ImGui::EndDragDropTarget();
-    }
-
-    ImGui::EndGroup();
-
+    processDropTarget("bottom_col", ImVec2(box_left_x, columnBottomY), columnOffsets["bottom_col"].offset);
 
     ImGui::End();
 }

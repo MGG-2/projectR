@@ -13,7 +13,6 @@ ImVec4 lightColor = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
 ImVec4 buttonColor = ImVec4(0.20f, 0.20f, 0.22f, 1.00f);
 
 bool showESPPreview = false;
-float espDistance = 100.0f;
 bool enableBoxESP = true;
 bool enableHealthESP = true;
 bool enableNameESP = true;
