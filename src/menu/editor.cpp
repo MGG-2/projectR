@@ -1,4 +1,5 @@
 #include "editor.h"
+#include "config.h"
 #include "../../imgui/imgui.h"
 #include <iostream>
 
@@ -19,7 +20,7 @@ float healthBarOffset = 5.0f; // Offset from the bottom of the box
 // Default values for labels
 float nicknameOffsetY = -20.0f;
 float distanceOffsetY = 30.0f;
-float pingOffsetY = 45.0f;
+float pingOffsetY = 30.0f;
 
 // Function to print current values to the console
 void PrintCurrentValues()
@@ -54,7 +55,7 @@ void ResetValues()
     healthBarOffset = 5.0f;
     nicknameOffsetY = -20.0f;
     distanceOffsetY = 30.0f;
-    pingOffsetY = 45.0f;
+    pingOffsetY = 30.0f;
     PrintCurrentValues();
 }
 
@@ -174,6 +175,17 @@ void RenderSettings()
     }
 
     ImGui::EndChild();
+
+    // Save and Load buttons
+    if (ImGui::Button("Save Config"))
+    {
+        SaveConfig();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Load Config"))
+    {
+        LoadConfig();
+    }
 
     // Reset button
     if (ImGui::Button("Reset"))

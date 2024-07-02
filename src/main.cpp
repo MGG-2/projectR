@@ -11,6 +11,7 @@
 #include "menu/menu.h"
 #include "menu/esp-preview.h"
 #include "menu/editor.h"
+#include "menu/config.h"
 #include "rendering/background.h"
 
 struct FrameContext {
@@ -111,6 +112,8 @@ int main(int, char**) {
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    LoadConfig();
 
     // Setup ImGui style
     SetupImGuiStyle();

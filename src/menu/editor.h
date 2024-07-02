@@ -15,8 +15,9 @@ extern float healthPercent;
 extern float healthBarHeight;
 extern float healthBarOffset;
 
-extern float nicknameOffsetY;
-extern float distanceOffsetY;
-extern float pingOffsetY;
+extern float nicknamePosX, nicknamePosY;
+extern float distancePosX, distancePosY;
+extern float pingPosX, pingPosY;
+extern float healthBarPosX, healthBarPosY;
 
 #endif // EDITOR_H

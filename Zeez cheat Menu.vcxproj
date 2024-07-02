@@ -131,6 +131,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\menu\config.h" />
     <ClInclude Include="src\menu\editor.h" />
     <ClInclude Include="src\menu\esp-preview.h" />
     <ClInclude Include="src\menu\menu.h" />
@@ -148,6 +149,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\menu\config.cpp" />
     <ClCompile Include="src\menu\editor.cpp" />
     <ClCompile Include="src\menu\esp-preview.cpp" />
     <ClCompile Include="src\menu\menu.cpp" />
@@ -167,6 +169,9 @@
   <ItemGroup>
     <Font Include="src\fonts\AWAKENNING.ttf" />
     <Font Include="src\fonts\Bad Coma.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\cfg.ini" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

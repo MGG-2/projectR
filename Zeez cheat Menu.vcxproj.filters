@@ -57,6 +57,9 @@
     <ClInclude Include="src\menu\editor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\menu\config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
@@ -95,6 +98,9 @@
     <ClCompile Include="src\menu\editor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\menu\config.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="src\rendering\bg.jpg">
@@ -107,5 +113,8 @@
   <ItemGroup>
     <Font Include="src\fonts\AWAKENNING.ttf" />
     <Font Include="src\fonts\Bad Coma.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\cfg.ini" />
   </ItemGroup>
 </Project>
