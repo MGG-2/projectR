@@ -134,8 +134,8 @@ void preview() {
     }
 
     // Create drop targets for each column
-    auto processDropTarget = [&](const char* columnId, ImVec2 dropPos, float& columnOffset) {
-        ImGui::InvisibleButton(columnId, ImVec2(40, windowSize.y));
+    auto processDropTarget = [&](const char* columnId, ImVec2 dropPos, float& columnOffset, ImVec2 size) {
+        ImGui::InvisibleButton(columnId, size);
         if (ImGui::BeginDragDropTarget()) {
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_NAME")) {
                 itemPositions["DND_NAME"].position = ImVec2(dropPos.x, dropPos.y + columnOffset);
@@ -161,17 +161,21 @@ void preview() {
         }
         };
 
+    // Adjust the drop target positions and sizes
     ImGui::SetCursorPos(ImVec2(columnLeftX - windowPos.x, box_top_y - windowPos.y));
-    processDropTarget("left_col", ImVec2(columnLeftX, box_top_y), columnOffsets["left_col"].offset);
+    processDropTarget("left_col", ImVec2(columnLeftX, box_top_y), columnOffsets["left_col"].offset, ImVec2(40, box_bottom_y - box_top_y));
 
     ImGui::SetCursorPos(ImVec2(columnRightX - windowPos.x, box_top_y - windowPos.y));
-    processDropTarget("right_col", ImVec2(columnRightX, box_top_y), columnOffsets["right_col"].offset);
+    processDropTarget("right_col", ImVec2(columnRightX, box_top_y), columnOffsets["right_col"].offset, ImVec2(40, box_bottom_y - box_top_y));
 
-    ImGui::SetCursorPos(ImVec2(box_left_x - windowPos.x, columnTopY - windowPos.y));
-    processDropTarget("top_col", ImVec2(box_left_x, columnTopY), columnOffsets["top_col"].offset);
+    // Move the top column to the top of the ESP box and adjust its width
+    ImGui::SetCursorPos(ImVec2(box_left_x - windowPos.x, box_top_y - 30 - windowPos.y));
+    processDropTarget("top_col", ImVec2(box_left_x, box_top_y - 30), columnOffsets["top_col"].offset, ImVec2(box_right_x - box_left_x, 30));
 
     ImGui::SetCursorPos(ImVec2(box_left_x - windowPos.x, columnBottomY - windowPos.y));
-    processDropTarget("bottom_col", ImVec2(box_left_x, columnBottomY), columnOffsets["bottom_col"].offset);
+    processDropTarget("bottom_col", ImVec2(box_left_x, columnBottomY), columnOffsets["bottom_col"].offset, ImVec2(box_right_x - box_left_x, 30));
+
+
 
     ImGui::End();
 }
