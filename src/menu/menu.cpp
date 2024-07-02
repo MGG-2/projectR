@@ -5,7 +5,6 @@
 #include <d3d12.h>
 #include "esp-preview.h"
 
-// Custom colors based on the provided example
 ImVec4 mainColor = ImVec4(0.13f, 0.13f, 0.14f, 1.00f);
 ImVec4 accentColor = ImVec4(0.29f, 0.29f, 0.29f, 1.00f);
 ImVec4 textColor = ImVec4(0.85f, 0.85f, 0.85f, 1.00f);
@@ -18,6 +17,8 @@ float espDistance = 100.0f;
 bool enableBoxESP = true;
 bool enableHealthESP = true;
 bool enableNameESP = true;
+bool enableDistanceESP = true;
+bool enablePingESP = true;
 
 void SetupImGuiStyle() {
     ImGuiStyle& style = ImGui::GetStyle();
@@ -44,19 +45,14 @@ void RenderCustomTitleBar(const char* title, ImVec2 windowSize) {
 }
 
 void RenderMenu() {
-    // Set a standard size for the window
     ImVec2 windowSize = ImVec2(905, 624);
     ImGui::SetNextWindowSize(windowSize, ImGuiCond_Once);
 
     if (ImGui::Begin("##ZeeZ Menu", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse)) {
-        // Create the tab bar
         if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None)) {
-
-            // Create the ESP tab
             if (ImGui::BeginTabItem("ESP")) {
-                ImGui::BeginChild("ESP Settings", ImVec2(0, 0), true); // Create a frame to hold all ESP settings
+                ImGui::BeginChild("ESP Settings", ImVec2(0, 0), true);
 
-                // Render each setting with custom styled checkboxes
                 auto settingStyle = []() {
                     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5.0f);
                     ImGui::PushStyleColor(ImGuiCol_ChildBg, mainColor);
@@ -68,7 +64,6 @@ void RenderMenu() {
                     ImGui::PopStyleVar();
                     };
 
-                // Checkbox with custom style to match the image
                 auto customCheckbox = [](const char* label, bool* v) {
                     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 12.0f);
                     ImGui::PushStyleColor(ImGuiCol_FrameBg, darkColor);
@@ -118,9 +113,14 @@ void RenderMenu() {
 
                 settingStyle();
                 ImGui::BeginChild("Distance", ImVec2(0, 50), true);
-                ImGui::PushItemWidth(150);
-                ImGui::SliderFloat("Distance", &espDistance, 50.0f, 1000.0f, "%.1f");
-                ImGui::PopItemWidth();
+                customCheckbox("Distance", &enableDistanceESP);
+                ImGui::SameLine();
+                ImGui::EndChild();
+                endSettingStyle();
+
+                settingStyle();
+                ImGui::BeginChild("Ping", ImVec2(0, 50), true);
+                customCheckbox("Ping", &enablePingESP);
                 ImGui::SameLine();
                 ImGui::EndChild();
                 endSettingStyle();
@@ -128,15 +128,12 @@ void RenderMenu() {
                 ImGui::EndChild();
                 ImGui::EndTabItem();
             }
-            // Create more tabs as needed
             ImGui::EndTabBar();
         }
         ImGui::End();
     }
 
-    // Render the ESP preview window if the checkbox is checked
     if (showESPPreview) {
         preview();
     }
 }
-
