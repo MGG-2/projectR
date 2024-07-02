@@ -1,7 +1,9 @@
 #include "menu.h"
 #include "../../imgui/imgui_impl_win32.h"
 #include "../../imgui/imgui_impl_dx12.h"
+#include "../../imgui/imgui.h"
 #include <d3d12.h>
+#include "esp-preview.h" // Include the header for the ESP preview
 
 // Custom colors
 ImVec4 mainColor = ImVec4(0.13f, 0.14f, 0.15f, 1.00f);
@@ -11,6 +13,12 @@ ImVec4 darkColor = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
 ImVec4 lightColor = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
 ImVec4 buttonColor = ImVec4(0.20f, 0.20f, 0.22f, 1.00f);
 
+// ESP settings
+bool showESPPreview = false;
+float espDistance = 100.0f; // ESP distance setting
+bool enableBoxESP = true;   // Toggle for Box ESP
+bool enableHealthESP = true; // Toggle for Health ESP
+bool enableNameESP = true;   // Toggle for Name ESP
 
 void SetupImGuiStyle() {
     ImGuiStyle& style = ImGui::GetStyle();
@@ -25,35 +33,7 @@ void SetupImGuiStyle() {
     style.ItemSpacing = ImVec2(10.0f, 8.0f);
     style.IndentSpacing = 12.0f;
 
-    ImVec4* colors = style.Colors;
-    colors[ImGuiCol_Text] = textColor;
-    colors[ImGuiCol_WindowBg] = mainColor;
-    colors[ImGuiCol_ChildBg] = mainColor;
-    colors[ImGuiCol_PopupBg] = darkColor;
-    colors[ImGuiCol_Border] = darkColor;
-    colors[ImGuiCol_FrameBg] = accentColor;
-    colors[ImGuiCol_FrameBgHovered] = buttonColor;
-    colors[ImGuiCol_FrameBgActive] = buttonColor;
-    colors[ImGuiCol_TitleBg] = darkColor;
-    colors[ImGuiCol_TitleBgActive] = darkColor;
-    colors[ImGuiCol_TitleBgCollapsed] = darkColor;
-    colors[ImGuiCol_CheckMark] = textColor;
-    colors[ImGuiCol_SliderGrab] = textColor;
-    colors[ImGuiCol_SliderGrabActive] = textColor;
-    colors[ImGuiCol_Button] = buttonColor;
-    colors[ImGuiCol_ButtonHovered] = accentColor;
-    colors[ImGuiCol_ButtonActive] = textColor;
-    colors[ImGuiCol_Header] = accentColor;
-    colors[ImGuiCol_HeaderHovered] = buttonColor;
-    colors[ImGuiCol_HeaderActive] = textColor;
-    colors[ImGuiCol_Separator] = darkColor;
-    colors[ImGuiCol_SeparatorHovered] = buttonColor;
-    colors[ImGuiCol_SeparatorActive] = textColor;
-    colors[ImGuiCol_Tab] = darkColor;
-    colors[ImGuiCol_TabHovered] = buttonColor;
-    colors[ImGuiCol_TabActive] = textColor;
-    colors[ImGuiCol_TabUnfocused] = darkColor;
-    colors[ImGuiCol_TabUnfocusedActive] = buttonColor;
+    ImGui::StyleColorsDark();
 }
 
 void RenderCustomTitleBar(const char* title, ImVec2 windowSize) {
@@ -66,15 +46,97 @@ void RenderCustomTitleBar(const char* title, ImVec2 windowSize) {
 
 void RenderMenu() {
     // Set a standard size for the window
-    ImVec2 windowSize = ImVec2(800, 600);
+    ImVec2 windowSize = ImVec2(905, 624);
     ImGui::SetNextWindowSize(windowSize, ImGuiCond_Once);
 
-    if (ImGui::Begin("##ZeeZ Menu", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize)) {
+    if (ImGui::Begin("##ZeeZ Menu", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse)) {
+        // Create the tab bar
+        if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None)) {
 
-        //RenderCustomTitleBar("ZeeZ Menu", windowSize);
+            // Create the ESP tab
+            if (ImGui::BeginTabItem("ESP")) {
+                ImGui::BeginChild("ESP Settings", ImVec2(0, 0), true); // Create a frame to hold all ESP settings
 
-        
+                // Render each setting with custom styled checkboxes
+                auto settingStyle = []() {
+                    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5.0f);
+                    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.13f, 0.14f, 0.15f, 1.00f));
+                    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.29f, 0.29f, 0.29f, 1.00f));
+                    };
 
+                auto endSettingStyle = []() {
+                    ImGui::PopStyleColor(2);
+                    ImGui::PopStyleVar();
+                    };
+
+                // Checkbox with custom style to match the image
+                auto customCheckbox = [](const char* label, bool* v) {
+                    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 12.0f);
+                    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.20f, 0.20f, 0.20f, 1.00f));
+                    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.20f, 0.20f, 0.20f, 1.00f));
+                    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.20f, 0.20f, 0.20f, 1.00f));
+                    ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(0.25f, 0.78f, 0.25f, 1.00f));
+                    ImGui::Checkbox(label, v);
+                    ImGui::PopStyleColor(4);
+                    ImGui::PopStyleVar();
+                    };
+
+                settingStyle();
+                ImGui::BeginChild("preview ESP", ImVec2(0, 50), true);
+                customCheckbox("preview ESP", &showESPPreview);
+                ImGui::SameLine();
+                ImGui::EndChild();
+                endSettingStyle();
+
+                ImGui::Spacing();
+
+                settingStyle();
+                ImGui::BeginChild("Enable Box ESP", ImVec2(0, 50), true);
+                customCheckbox("Enable Box ESP", &enableBoxESP);
+                ImGui::SameLine();
+                ImGui::EndChild();
+                endSettingStyle();
+
+                ImGui::Spacing();
+
+                settingStyle();
+                ImGui::BeginChild("Enable Health ESP", ImVec2(0, 50), true);
+                customCheckbox("Enable Health ESP", &enableHealthESP);
+                ImGui::SameLine();
+                ImGui::EndChild();
+                endSettingStyle();
+
+                ImGui::Spacing();
+
+                settingStyle();
+                ImGui::BeginChild("Enable Name ESP", ImVec2(0, 50), true);
+                customCheckbox("Enable Name ESP", &enableNameESP);
+                ImGui::SameLine();
+                ImGui::EndChild();
+                endSettingStyle();
+
+                ImGui::Spacing();
+
+                settingStyle();
+                ImGui::BeginChild("ESP Distance", ImVec2(0, 50), true);
+                ImGui::PushItemWidth(150);
+                ImGui::SliderFloat("ESP Distance", &espDistance, 50.0f, 1000.0f, "%.1f");
+                ImGui::PopItemWidth();
+                ImGui::SameLine();
+                ImGui::EndChild();
+                endSettingStyle();
+
+                ImGui::EndChild();
+                ImGui::EndTabItem();
+            }
+            // Create more tabs as needed
+            ImGui::EndTabBar();
+        }
         ImGui::End();
+    }
+
+    // Render the ESP preview window if the checkbox is checked
+    if (showESPPreview) {
+        preview(); // Call the preview function from esp-preview.cpp
     }
 }

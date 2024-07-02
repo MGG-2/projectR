@@ -10,8 +10,6 @@
 #include <filesystem>
 #include "menu/menu.h"
 #include "menu/esp-preview.h"
-#include "menu/editor.h"
-#include "menu/config.h"
 #include "rendering/background.h"
 
 struct FrameContext {
@@ -113,8 +111,6 @@ int main(int, char**) {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
-    LoadConfig();
-
     // Setup ImGui style
     SetupImGuiStyle();
 
@@ -202,11 +198,10 @@ int main(int, char**) {
         ImGui::GetBackgroundDrawList()->AddImage((ImTextureID)my_texture_srv_gpu_handle.ptr,
             ImVec2(drawX, drawY), ImVec2(drawX + drawWidth, drawY + drawHeight));
 
-        //RenderMenu();
+        RenderMenu();
         
         // Render the ESP preview window 
-        RenderESP();
-        RenderSettings();
+        //preview();
 
         ImGui::Render();
 

@@ -131,8 +131,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\menu\config.h" />
-    <ClInclude Include="src\menu\editor.h" />
     <ClInclude Include="src\menu\esp-preview.h" />
     <ClInclude Include="src\menu\menu.h" />
     <ClInclude Include="imgui\imconfig.h" />
@@ -149,8 +147,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\menu\config.cpp" />
-    <ClCompile Include="src\menu\editor.cpp" />
     <ClCompile Include="src\menu\esp-preview.cpp" />
     <ClCompile Include="src\menu\menu.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
